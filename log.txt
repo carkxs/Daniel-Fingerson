@@ -1,1 +1,173 @@
 #import text files here
+ Log:
+
+Note: since many of my earlier findings have become outdated due to me taking up using new and better software, I will eventually go back through older log dates to somehow indicate that that information is irrelevant.
+
+
+Wednesday, June 19th: 
+
+Began installing all the necessary files and libraries in order to begin working on my new Raspberry PI.
+
+I installed and compiled Eric’s C code, which I am trying to replicate with my own Python code: I am editing as I go along to fix issues, as it currently will not read me back any data on the python end.
+
+It seems that the first “input” on the terminal block does nothing, so I am taking the differential voltages of Device 1, with Channel 0 connected to either 3/5 volts, and Channel 1 connected to ground.
+
+3 Volts gives 00 02 A6 (last 2 occasionally change)
+5 volts give 00 03 (FF/F2/F0)
+
+Once I have it returning correct values, I will convert them to voltages. 
+
+My theory for why it is not working is that I may have to initialize more aspects that might be necessary for this specific SPI transaction that most other users on the internet that I have been researching didn’t need to use, such as clock speed and GPIO pin specification. 
+
+Here are my future solutions: 
+
+Try and directly use the BCM Library in python. The Xfer2 function of SPIdev works poorly, as does SPIdev in general, as in my opinion it does not have as many options, and the options it does have don’t seem to work consistently, as well as the fact that most people tend to use the BCM2835 in favor of SPIDev. In general, I believe it struggles handling more then one device
+https://pypi.org/project/PyBCM2835/
+https://www.raspberrypi.org/forums/viewtopic.php?t=161104
+
+Make sure that SPI open is receiving the proper commands when initialized: I should do more research on how to properly do this.
+
+Have the read and select commands all in one file: having them as two separate ones may be affecting the clock/ read commands. 
+
+Thursday, June 20th 
+
+On my Pi’s, will be using BCM2835 version 1.5.7
+https://gist.github.com/annem/3183536
+
+https://www.raspberrypi.org/forums/viewtopic.php?t=15892
+Above shows how to download and compile the PYBCM2835
+
+DONT PUT GRANND TOTAL ON 15TH
+
+Python 3 potential issues with importing BCM: 
+https://github.com/mubeta06/py-libbcm2835
+
+
+Summation: spent most of the day researching wrappers and ways of importing C libraries into Python, both of which shared many of the same challenges. Was originally tinkering with the PYBCM2835 library, but for some reason it would fail to work despite configuring all libraries. I eventually found a fork on the page that ironically said that this was incompatible with Python 3 for a multitude of reasons, and I was lucky enough to find a Github with Python3 compatible code. 
+
+As of now, the module loads and I am able to begin/ end SPI sessions, which leads me to believe that this software works. Unfortunately, the actual BCM2835 end’s parameters are often pointers, and give way to data type conversion errors: I will either have to implement some sort of wrapping function to convert this or I may even be able to do some sort of pseudo type casting to convert parameters into pointers. 
+
+I have also been working on completely converting Eric’s code into Python so that once I figure out the pointer situation I will have a working piece of software imidielty.
+
+I have yet to come to a solution, so I am going to once again try SPIdev, but focusing chip enables and what not.
+
+What I have found however that the second parameter of SPIdev “Open” is the chip select, while the first is “the device itself”. Therefore, setting GPIO pins to high/low like I was doing before is completely irrelevant, and it seems that the first parameter should always be 0.
+
+The problem I’m having is that I COULD potentially write code that is compatible with SPIdev now that I’ve been reading documentation across websites, but unfortunately their exists no full length documentation guide except 1; unfortunately that site is no longer accessible.
+
+I COMPLETELY replicated Erics code in SpiDev and was very meticulous about it, but still to no avail: it still seems that BCM2835 would be best, but I still need to figure out the pointer situation. Tomorrow, the first thing that I need to do is learn how to initialize variables like Eric did, as when I tried to do it word per word, the inside parameter of the intitlialization function did not recognize the text, so I will need to figure out what IS a valid input)
+
+If tomorrow I cannot make any headway halfway through the day, I will try and submit my problems to stack overflow: I will most likely make a post specifically about pointer casting for the BCM2835, as this is mostly a software problem, whilst the SpiDev is a combination of hardware and software, and most likely wont get responded to/ will not be relevant. I will then move on to making the webpage more dynamic with PHP.
+
+Friday, June 21st
+
+This morning I was able to make the original PyBCM2835 C wrapper code work: I no longer have to interface with the forked python 3 one. Although this is INCREDIBLE as it has been much too long since I’ve had any breakthroughs on the hardware side of things, it does mean we indeed will have to start using python 2 again, as the library is only compatible with that version.
+
+The way to setup this library on a new Pi is to: 
+1. Download BCM2835 code
+2. Compile/create shared library from the code (description of how to do this is in PyBCM2835 read me file)
+3. Download PyCM2835
+4. Extract tar file within the “downloads” directory
+5. Move into this new folders director and create a setup.py file by running the following: sudo python setup.py install
+6. NOTE: MUST BE USING PYTHON 2
+
+For some reason, I’m still encountering errors. Specifically, for some reason I can never get ANYTHING, whether it is before or after sensitive data to print let alone run (I checked this with flags, which would not trigger when they should have, meaning the code completely stopped beforehand) these flags however WOULD raise when I would get rid of the initialization statements at the beginning of the code. Despite changing it to match the code of other users perfectly it still fails to run partially no matter where I put the statements, which are unfortunently very necessary.
+
+
+Sunday, June 23rd
+
+FINALLY got the SPI dev module in python to read values: as of now, I have python code that perfectly replicates Erics C code for his Multi-SPI select: both the read AND select channel functions are now all in one file. With this, most of my research and findings of this week are irrelevant, but now I am VERY familiar with C wrapping, how to import and build system libraries, which will be incredibly helpful further down the line. 
+
+Monday, June 24th:
+
+Finalized software for spi dev: started working on Full Stack Web application, which is essentially a cohesive method of front and back end web development (both server side and client side).  This is essentially the exact same thing that I have already been doing, except Eric informed me that what I have been doing has a concrete name, profession, and thus has a very large pool of resources to use. This is extremely helpful for the project, as before knowing this I was either consulting front end or back end web development resources, which ironically are very hard to integrate together if done separately like I was attempting to do. Eric sent me an incredible book called Raspberry Pi: Full Stack. The reason that it is so incredible is that not only does it have a very comprehensive walkthrough on how to create a full stack server, but it also does so nearly entirely via Python, and even better then that has its basis around recording and displaying sensor data! From a first glance, it seems that this code goes WELL beyond what my or Aydens code was ever capable of, and looks very slick as well. It also seems to be incredibly scalable, so once I finish what is capable in the books tutorial I can simply begin adding more and more functions to it without problems.  I will include a copy of the PDF that Eric sent me on GitHub once that is setup.
+
+Tuesday, June 25th
+Went over our KICad designs that Eric had us work on so that we could be familiar with the software. Read some more of the book, got the LTC2448 to send me back data (not yet sure if it is correct, but it changes as voltage changes) and spent the majority of the day redesigning Eric’s SPIselect in KiCAD, the reason being  that  we can send KiCAD files directly to the pick and place machine, and also that there are some minor adjustments that needed to be made to the board such as size and spacing, and also the fact that he wanted us to be able to create PCB’s from scratch in the future. 
+
+From my work yesterday and further reading today, I have concluded that despite the fact that this book is only 4 years old, it is already fairly outdated, as many of the libraries that I needed to import are no longer supported/ available online. I DID learn however that the author of the textbook has a Udemy online course that is much more recent (2018 and still updates the course). Because I am such a fan of his work I bought the course. I will give you a link to the project as well as my username and password so that you may also look at what I am doing. The PDF is still fairly accurate, so if you would simply like to skim it and have an idea of what I am doing, you could just read by section, but if you would REALLY like to know what I am doing please feel free to watch the course,. And since both half the textbook and the book are simply about setting up a Raspberry Pi, Python, and wiring up a different sensor that we won’t be using, the book/ video lectures in reality are 1 to 2 thirds shorter then they actually are. I would highly recommend skimming through it.
+
+Website: https://www.udemy.com
+
+Email login: djfingerson@gmail.com
+Password: Newton2014
+
+
+Wednesday, June 26th
+
+Met with Carl. Eric gave presentation, I presented what I had so far, and helped set up Carls pi/ accompanying hardware. Briefly worked on PCB
+
+Sunday, June 30th
+
+Continued working on PCB, but was unable to get into lab to get Pi hardware since I still do not have ID card access to the building, so I was only able to work half a day.
+
+Monday, July 1st
+
+Had to completely redesign PCB to save space and update components that took up too much space, and ones that had incompatible footprints. 
+ Since kicad has no local auto-routing option I had to download and export to a program called ToPor.
+
+Tuesday, July 2nd
+
+Finished PCB design via software called Freroute, a Java executable. This is because whenever I would import Topor files it would always crash since it was a very outdated piece of software.
+Had to go back and redefine parameters and footprints and generate files necessary for sending board out to OSHPark. 
+Updated and re-sent the OpenSCAD file for the Arduino Reflow box, as both my measurements weren’t 100% accurate as Eric had borrowed all of the micrometers, so I was making educated guesses on the dimensions, and also the fact that the person in charge of the John T Richardson Library Makerspace at DePaul did a horrible job, to the point that we were unable to use the box since all of the ports and thruholes and the bottom of the box were filled with so much extra plastic that we were unable to remove them. 
+
+The Pi I was previously working on was having troubles working, so I went back to my house and reinstalled everything from the Full Stack course. I was able to do this suprinsingly quickly since I had already done it, and I am now at the point where I have a complete library which, via Flask, Python (I have begun using the virtual environment version of Python since the author highly recommended doing so to avoid crashes and errors) Nginx and uWSGI, I essentially have the application and web server of the project completely nailed down. This correlates to being down with Chapter/Section 6 of the Textbook/course. 
+
+I spent the rest of the time going through my log, which was more or less very brief notes and transcribed them (didnt spend too much time on the very early notes since they’re somewhat irrelevant now) into actual sentences, which I will now upload to our shared GitHub. 
+
+
+
+Wednesday, July 3rd: 
+
+Web application/ web application stack configured. As of right now since I do not have any sort of functions/ sensor data, this means that I have all the right files and directories configured so that Flask will automatically start up and run and be accessible via the browser at the moment the Pi boots, which means that the user won’t even need to start Python/ the command line to start the program.
+
+Have begun using SQLite, which unlike most other SQL databases does not require an other server side processes as  it is completely file based. This is the method of storing information that the author suggested, and the fact that it is extremely easy to use ( I would argue it is even easier then reading and writing files, since only a few commands have to go into creating and retrieving information vs having to use complicated and time consuming for loops). It does all of this on a single file. Has MANY more advantages: I will include a link to its features. We may in the future switch to MySQL, since SQLite has poor multi user support.
+
+I have now gotten to the point that I am beginning to incorporate real sensor data into the application. Unfortunately, I left the lab to get components from my house to work with the Pi, but left the MCP3008 in Byrne which I don’t have key card access to. 
+
+The author is only using a single DHT22 sensor, which is a single sensor that displays both humidity and temperature via a single channel and a predefined python Adafruit library. Since this diverges from the type of sensors we are going to be using, I will start working on getting the Multi SPI code to be compatible with/mimic this sensor yet also function on its own for now, which means I am going to adapt the Multi SPI code to only display the differential voltage between 4 channels, which translates to only two outputs (which I will use as stand ins for temperature and humidity). I will also need to mimic the sensor outputting data every so often, which will be fairly simple to do I just need to decide whether to do this locally or within flask.  I will also create a “spoof data” function, since the actual data that the MCP3008 would be receiving would be very boring constant values, and wouldn’t be very helpful as I move into using SQLite and graphing software to store and display data. All of this should be VERY easy, as all I will need to do is supply the MultiSPI.py file with predefined variables of which channel to select a specific device and only return two outputs (essentially I am just limiting what it can do for this specific situation), and I already have a spoof data function from Aydens code. Further down the line, I will go back and give users the capability to select specific devices, but as of now I will just follow the course, since it is teaching me incredible web building tools that I hope by the end of the course will make the process of doing that VERY simple, and diverting form what the author has right now to anything beyond two sensor readings would be borderline impossible since he has a very specific structure that is initially difficult to deviate from.
+
+When doing this, I may have to do a Setup.py configuration on the MultiSPI.py file/folder
+
+
+Further down the line, I will eventually create a Step by step instruction from a blank Raspberry Pi on how to install/set up EVERYTHING for the application.
+
+Specifically, need to update lab_app.py file which is reading sensor data via flask to read MultiSPI file, not much change will need to happen to the MultiSPI. 
+
+I have updated the Python lab_app file from the course to read MCP3008 data via MultiSPI.py, as well as all the configuration files. 
+
+I encountered errors, but thankfully the author taught me how to setup a log folder that will displays both history of using uwsgi AND any error that occurred: fortuneltey, the only error that is occurs is “no python application found”. This leads me to believe that I either do have to have a setup.py program or that I need to incorporate some sort of virtual machine. Looking over once more, it seems that calling the file MultiSPI-online is causing the problem, as the “-“ is invalid syntax in Python, so this may very well be the problem.
+
+Got into the lab and tried just about everything I could find on the internet to fix the issues but to no avail. What I have discovered however is that when I run my lab_app.py file via the command line, and not automatically via the libraries I build the web application the application works exactly as suspected. Therefore, I am for the moment going to move on with spoof data (which works for some reason) and submit a question post to the Udemy course about exactly what I just described except in much more detail so that he would know everything that I have tried/ have that could be of any help: one of the teaching assistants of the course responded within the last 14 hours, which means the course is still looked at and maintained, and the fact that his response was to someone who had posted a question a day ago makes me hopeful that I will receive a response within 24 hours. 
+
+Spoof data is a success: I will need to make it its own file or import this function into the capture script for actually recording the values, otherwise what is being displayed vs what is being captured will be different (although this really doesn’t matter all that much, since they’re random values anyways )
+
+Saturday, July 6th:
+
+Discovered the problem: had to Pip install spider and RPi.GPIO while having bin activated while within the directory, since this is how the virtual environment knows where modules are.
+
+Added a new level of system automation that is completely independent of the user. I configured a cron file, which is a linux configuration file that specifies shell commands to run periodically on a given schedule, to automatically take/record sensor data to the database, a process which runs indefinitely after boot time. The only problem with this is is that if we want to manually configure when certain sensors update/record automatically in this way, it could get complicated, as of now the sensor data reading schedule has to manually be inputed to the cron file via the command line, and is a universal time for all the sensors. 
+Created an SQLite3 database which stores 2 sets of data: temperature, and humidity (I can and most likely will change these later, I just havent yet since I would need to update both the database AND the python files), and I have it doing so through the MultiSPI select file: since I often do not have the MultiSPIselect connected, a majority of the sensor readings are 0. This gives me even more incentive to reconfigure the files/databases.
+
+Added a physical page route that displays all of the records of the log for each sensor via the created database in the browser.
+
+Added the ability to, via manipulation of the query string in the URL, to only display a select range of times via the command line, as the page got extremely messy as more data readings were taken. 
+
+Monday, July 8th:
+
+Added the ability to no longer have to manually type in the date/time range desired to be displayed with physical radio buttons, which will display readings within either the past 3,6,12, or 24 hours. 
+
+Added the ability to display a physical chart of the data via GoogleCharts, which updates itself to display the specific time range of data values. Google charts seems to have a MUCH better library for displaying data then bokeh: the only difference I see is that it is not real time, but I am almost certain that GoogleCharts can similarly do so, except that it is more powerful and has more capabilities. And rather then running from a server side and be displayed client side, the Google Charts API runs almost entirely on the client side, so real time data capture, display and updating would most likely be faster.
+
+I added a JavaQuery CDN which allows for users to select from two calendars widgets, one is a “from date”, the other a “to date”, which allows users to select a date AND time range that the user wishes to display via the chart and physical database.
+
+Due to the fact that the page name urls are fairly complicated, I added hyperlinks between each page except root: I currently have root only do one thing: say “hello world, but I will soon (most likely tomorrow) have it display information about the shrimp project, and have a note that the webpage layout and design was based on the Udemy course.
+
+I am just about to finish the Udemy course: I chose not to do the “incorporating time zones” section, as we will all be doing our work inside Chicago. I chose to leave out the “incorporating Plotly” section, as of right now it really wont help, and I don’t see much of a reason to include it at this moment since it seems to do everything google charts does just via a different website. I would like to in the future use Plotly.js to have a page that is dedicated to displaying a realtime updated graph: the graph that is currently in place in my opinion is VERY useful, and replacing it with a realtime graph would be a waste since it allows the user to access and visualize certain sections of time. My only concern about not doing these sections right now is that if I try to add them back later once I have added much more html and other code that it may be hard to change it later, as the author has a VERY unique and interesting way of designing pages, which makes it difficult to expand upon. My hope is that by the time that comes, I will be much more comfortable with HTML and I will have adjusted the style of the page to suit my own style so that it will be easy to expand upon. 
+
+Eduroam IP adress: 75.102.255.193
+
+Setting Static IP address: https://thepihut.com/blogs/raspberry-pi-tutorials/how-to-give-your-raspberry-pi-a-static-ip-address-update
+
+I am now at the point that I am ready to make the web application visible over the internet. I have done research on portforwarding and assigning a static IP address to my Pi: the Udemy tutorial on this is very poor, and the fact that Carl said that he would like to host it on his DNS that I will wait and do it with him tomorrow. Until I talk to Carl, I will now begin working on electronics/hardware tasks that Eric has assigned me, as well as working on creating code for the DAC, as the application needs some sort of DAC page, which I have nothing for as of yet. 
