@@ -1,0 +1,116 @@
+#DONT INCLUDE DB FILES AND SOCK
+Shrimp FullStack Version 1 Install Instructions
+Written By Daniel Fingerson
+Web Application Code and Concept Derived From Peter Dalmaris, Raspberry Full stack 2018
+
+Version 1: Only has real time data display and selective time pulling to display table/graph
+Version 2 will include real time plot, ability to save/retreive plot and Input page 
+
+SHOULD BE ABLE TO DOWNLOAD ALL OF THE RELEVANT FILES/FOLDERS BESIDES PYTHON AND SOCK FILES FIRST; LOG FOLDER MIGHT NOT NEED TO BE POPULATED SICNE IT ITS CREATED AUTOMATICALLY; SQL DATABASE WILL NEED TO BE NEWLY CREATED.
+
+1. Create the following directory with the following command: 
+mkdir home/pi/Desktop/Fullstack/www/lab_app
+USE THIS SAME LOGIC TO CREATE THE DIRECTORY SYSTEM THAT IS PRESENT ON GITHUB IF UNABLE TO DOWNLOAD ALL FILES/ FOLDERS DIRECTLY (USING CD TO NAVIGATE BETWEEN FOLDERS WHEN NEEDED)
+ALTHOUGH I HAVE IN ALL CAPS WHEN TO CREATE A FOLDER/INSTALL IT, TRY AND DO THIS BEFOREHAND
+SHOULD BE ABLE TO DO THIS BY DOING A CLONE OF THE PROJECT PAGE AND PULLING OUT THE FULLSTACK APPLICATION ONTO THE DESKTOP
+
+2. Run the following commands: 
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install build-essential
+sudo apt-get install libncurses5-dev libncursesw5-dev libreadline6-dev libffi-dev
+sudo apt-get install libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev libsqlite3-dev libgdbm-dev tk8.5-dev libssl-dev openssl
+sudo apt-get install python-dev
+cd ~
+sudo su
+mkdir python-source
+cd python-source/
+wget https://www.python.org/ftp/python/3.6.4/Python-3.6.4.tgz
+tar zxvf Python-3.6.4.tgz
+cd Python-3.6.4/
+./configure --prefix=/usr/local/opt/python-3.6.4
+make
+sudo make install
+/usr/local/opt/python-3.6.4/bin/python3.6 --version
+(The response should be: Python 3.6.4)
+cd home/pi/Desktop/Fullstack/www/lab_app
+/usr/local/opt/python-3.6.4/bin/python3.6 -m venv .
+. bin/activate
+apt-get install nginx
+DOWNLOAD PIP IF NOT ALREADY INSTALLED 
+pip install flask
+INSTALL LABAPP.PY FROM GITHUB AND PUT INTO LAB_APP FOLDER, WONT WORK WITHOUT EVERYTHING ELSE
+INSTALL THE STATIC AND TEMPLATE FOLDERS, INSERT INTO LAB_APP
+pip install install uwsgi
+rm /etc/nginx/sites-enabled/default
+INSTALL LAB_APP_NGINX.CONF FROM GITHUB NITO LAB_APP FOLDER
+ln -s home/pi/Desktop/Fullstack/www/lab_app/lab_app_nginx.conf /etc/nginx/conf.d
+/etc/init.d/nginx restart
+DOWNLOAD LAB_APP_UWSGI.INI FILE INTO LAB_APP FOLDER
+mkdir /home/pi/Desktop/Fullstack/log/uwsgi
+vim /etc/systemd/system/emperor.uwsgi.service #start uwsgi service at bootup rather then command line
+THIS SHOULD BE AN EMPTY FILE, SO INSERT THE FOLLOWING TEXT (press i to insert text):
+
+[Unit]
+Description=uWSGI Emperor
+After=syslog.target
+
+[Service]
+ExecStart=/home/pi/Desktop/Fullstack/www/lab_app/bin/uwsgi --ini /home/pi/Desktop/Fullstack/www/lab_app/lab_app_uwsgi.ini
+
+# Requires systemd version 211 or newer
+RuntimeDirectory=uwsgi
+Restart=always
+KillSignal=SIGQUIT
+Type=notify
+StandardError=syslog
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target
+
+END OF REQUIRED CODE (hit escape, then :wq, then enter)
+sytemctl start emperor.uwsgi.service
+systemctl status emperor.uwsgi.service
+(should have a green dot and say running)
+systemctl enable emperor.uwsgi.service
+apt-get install sqlite3
+mkdir static
+cd static
+mkdir css
+mkdir images
+DOWNLOAD SKELETON AND NORMALIZE CSS FILES INTO CSS DIRECTORY
+cd..
+mkdir templates
+DOWNLOAD ALL HTML TEMPLATES AND PLACE IN FOLDER
+AT THIS POINT, ENSURE YOU ARE STILL IN THE LAB APP DIRECTORY, AS ROOT AND WITH BIN ACTIVATED (SHOULD HAVE LAB APP IN PARENTHESIS IN FRONT)
+THIS IS TO ENSURE THAT ALL MODULES INSTALLED ARE INSTALLED TO THE VIRTUAL ENVIRONMENT OF PYTHON
+pip install gpi.gpio
+sqlite3 lab_app.db
+THE FOLLOWING ARE SQLITE COMMANDS FOR CREATING THE NECEESSARY DATABASES; CANT BE IMPORTED SINCE THEY WOULDNT BE EMPTY
+begin;
+create table temperatures (rDatetime datetime, sensorID text, temp numeric);
+insert into temperatures values (datetime(CURRENT_TIMESTAMP),"1",25);
+insert into temperatures values (datetime(CURRENT_TIMESTAMP),"1",25.10);
+commit;
+
+begin;
+create table humidities (rDatetime datetime, sensorID text, hum numeric);
+insert into humidities values (datetime(CURRENT_TIMESTAMP),"1",51);
+insert into humidities values (datetime(CURRENT_TIMESTAMP),"1",51.10);
+commit;
+.exit
+INSTALL ENV_LOG.PY AND PUT INTO LAB_APP FOLDER
+crontab -e
+2
+SCROLL TO THE BOTTOM OF THE FILE AND INSERT THE FOLLOWING TEXT:
+*/10 * * * * home/pi/Desktop/Fullstack/www/lab_app/bin/python home/pi/Desktop/Fullstack/www/lab_app/env_log.py
+PRESS THE FOLLOWING BUTTONS:
+ctrl x
+enter
+
+THIS SHOULD BE ALL THAT IS NEEDED
+
+
+
+
