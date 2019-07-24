@@ -9,10 +9,10 @@ import sqlite3
 app = Flask(__name__)
 app.debug = True # Make this False if you are no longer debugging
 
-'''
+
 #begin new code
 import dash
-from dash.dependencies import Output, Event
+from dash.dependencies import Output, Input
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly
@@ -20,26 +20,29 @@ import random
 import plotly.graph_objs as go
 from collections import deque
 
-X = deque(maxlen=20)
+X = deque(maxlen=30) #length of graph before it resizes horizontally
 X.append(1)
-Y = deque(maxlen=20)
+Y = deque(maxlen=30)
 Y.append(1)
 
 
-app_dash=dash.Dash(__name__, server=app, url_base_pathname='/dash')
-app.layout = html.Div(
+app_dash = dash.Dash(__name__,server=app,routes_pathname_prefix='/dash/')
+app_dash.layout = html.Div(
     [
         dcc.Graph(id='live-graph', animate=True),
         dcc.Interval(
             id='graph-update',
-            interval=1*1000
+            interval=10000, #updates every 10 seconds (in mS)
+            n_intervals = 0
         ),
     ]
 )
 
 @app_dash.callback(Output('live-graph', 'figure'),
-              events=[Event('graph-update', 'interval')])
-def update_graph_scatter():
+        [Input('graph-update', 'n_intervals')])
+
+
+def update_graph_scatter(n):
     X.append(X[-1]+1)
     Y.append(Y[-1]+Y[-1]*random.uniform(-0.1,0.1))
 
@@ -52,8 +55,14 @@ def update_graph_scatter():
 
     return {'data': [data],'layout' : go.Layout(xaxis=dict(range=[min(X),max(X)]),
                                                 yaxis=dict(range=[min(Y),max(Y)]),)}
+
+
+
+
+
+
 #end new code, bein old code
-'''
+
 @app.route("/")
 def hello():
     return render_template("hello.html")
