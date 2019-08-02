@@ -85,7 +85,20 @@ def repeat_run():
 
 @app.route("/input_dashboard/review_run")
 def review_run():
-    return render_template("sample3.html")
+    return render_template("review_handle.html")
+
+@app.route("/input_dashboard/review_run", methods=['POST']) 
+def review_run_post():
+    ID=request.form['id']
+    conn=sqlite3.connect('/home/pi/Desktop/Fullstack/www/lab_app/input_test.db')
+    curs=conn.cursor()
+    curs.execute("SELECT * FROM Input")
+    for row in curs.fetchall():
+        if(int(row[0])==int(ID)):
+            text= row[1]
+            more=row[2]
+    conn.close()
+    return render_template('output_handle.html', value=ID, first=text, second=more)
 
 @app.route("/input_dashboard/compare_runs")
 def compare_runs():
@@ -94,6 +107,29 @@ def compare_runs():
 @app.route("/input_dashboard/calibrate_system")
 def calibrate_system():
     return render_template("sample5.html")
+#test of input handle
+
+@app.route("/input_dashboard/input_handle")
+def input_handle():
+    return render_template("input_handle.html")
+
+@app.route('/input_dashboard/input_handle', methods=['POST'])
+def input_handle_post():
+    #need to add validation so that run ID inputs to the database are not repeated
+    ID=request.form['id']
+    text = request.form['text']
+    more=request.form['more']
+    conn=sqlite3.connect('/home/pi/Desktop/Fullstack/www/lab_app/input_test.db')
+    curs=conn.cursor()
+    curs.execute("""INSERT INTO Input values((?), (?), (?))""", (ID, text, more)) #problem most likely here: check the log
+    conn.commit()
+    conn.close()
+    return render_template('output_handle.html', value=ID, first=text, second=more)
+
+
+    
+    
+#end of test code
 
 @app.route("/live_data")
 def live_data():
