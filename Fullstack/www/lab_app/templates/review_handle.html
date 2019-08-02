@@ -17,27 +17,14 @@
   <link rel="icon" type="image/png" href="/static/images/favicon.png">
 </head>
 <body>
-<h1>Root Page: New Run Page: Populate with radio buttons/text input fields:</h1>
+
+<form method="POST">
+    <label for="id">Insert run id/number</label>
+    <br>
+    <input name="id">
+    <input type="submit" value="Submit">
+    
+</form>
 <input type=button onClick="location.href='/input_dashboard'" value='Return to Previous Page'>
-<form action="/action_page.php">
-  First name:<br>
-  <input type="text" name="firstname" value="Mickey">
-  <br>
-  Last name:<br>
-  <input type="text" name="lastname" value="Mouse">
-  <br><br>
-  <input type="submit" value="Submit">
-</form> 
-
-<p>If you click the "Submit" button, the form-data will be sent to a page called "/action_page.php".</p>
-
-
 </body>
 </html>
-
-
-
-
-
-
-
