@@ -171,3 +171,283 @@ Eduroam IP adress: 75.102.255.193
 Setting Static IP address: https://thepihut.com/blogs/raspberry-pi-tutorials/how-to-give-your-raspberry-pi-a-static-ip-address-update
 
 I am now at the point that I am ready to make the web application visible over the internet. I have done research on portforwarding and assigning a static IP address to my Pi: the Udemy tutorial on this is very poor, and the fact that Carl said that he would like to host it on his DNS that I will wait and do it with him tomorrow. Until I talk to Carl, I will now begin working on electronics/hardware tasks that Eric has assigned me, as well as working on creating code for the DAC, as the application needs some sort of DAC page, which I have nothing for as of yet. 
+
+Monday, July 1st 8 hours
+
+Had to completely redesign PCB to save space and update components that took up too much space, and ones that had incompatible footprints. 
+ Since kicad has no local auto-routing option I had to download and export to a program called ToPor.
+
+Tuesday, July 2nd
+
+Finished PCB design via software called Freroute, a Java executable. This is because whenever I would import Topor files it would always crash since it was a very outdated piece of software.
+Had to go back and redefine parameters and footprints and generate files necessary for sending board out to OSHPark. 
+Updated and re-sent the OpenSCAD file for the Arduino Reflow box, as both my measurements weren’t 100% accurate as Eric had borrowed all of the micrometers, so I was making educated guesses on the dimensions, and also the fact that the person in charge of the John T Richardson Library Makerspace at DePaul did a horrible job, to the point that we were unable to use the box since all of the ports and thruholes and the bottom of the box were filled with so much extra plastic that we were unable to remove them. 
+
+The Pi I was previously working on was having troubles working, so I went back to my house and reinstalled everything from the Full Stack course. I was able to do this suprinsingly quickly since I had already done it, and I am now at the point where I have a complete library which, via Flask, Python (I have begun using the virtual environment version of Python since the author highly recommended doing so to avoid crashes and errors) Nginx and uWSGI, I essentially have the application and web server of the project completely nailed down. This correlates to being down with Chapter/Section 6 of the Textbook/course. 
+
+I spent the rest of the time going through my log, which was more or less very brief notes and transcribed them (didnt spend too much time on the very early notes since they’re somewhat irrelevant now) into actual sentences, which I will now upload to our shared GitHub. 
+
+
+
+Wednesday, July 3rd: 8 hours
+
+Web application/ web application stack configured. As of right now since I do not have any sort of functions/ sensor data, this means that I have all the right files and directories configured so that Flask will automatically start up and run and be accessible via the browser at the moment the Pi boots, which means that the user won’t even need to start Python/ the command line to start the program.
+
+Have begun using SQLite, which unlike most other SQL databases does not require an other server side processes as  it is completely file based. This is the method of storing information that the author suggested, and the fact that it is extremely easy to use ( I would argue it is even easier then reading and writing files, since only a few commands have to go into creating and retrieving information vs having to use complicated and time consuming for loops). It does all of this on a single file. Has MANY more advantages: I will include a link to its features. We may in the future switch to MySQL, since SQLite has poor multi user support.
+
+I have now gotten to the point that I am beginning to incorporate real sensor data into the application. Unfortunately, I left the lab to get components from my house to work with the Pi, but left the MCP3008 in Byrne which I don’t have key card access to. 
+
+The author is only using a single DHT22 sensor, which is a single sensor that displays both humidity and temperature via a single channel and a predefined python Adafruit library. Since this diverges from the type of sensors we are going to be using, I will start working on getting the Multi SPI code to be compatible with/mimic this sensor yet also function on its own for now, which means I am going to adapt the Multi SPI code to only display the differential voltage between 4 channels, which translates to only two outputs (which I will use as stand ins for temperature and humidity). I will also need to mimic the sensor outputting data every so often, which will be fairly simple to do I just need to decide whether to do this locally or within flask.  I will also create a “spoof data” function, since the actual data that the MCP3008 would be receiving would be very boring constant values, and wouldn’t be very helpful as I move into using SQLite and graphing software to store and display data. All of this should be VERY easy, as all I will need to do is supply the MultiSPI.py file with predefined variables of which channel to select a specific device and only return two outputs (essentially I am just limiting what it can do for this specific situation), and I already have a spoof data function from Aydens code. Further down the line, I will go back and give users the capability to select specific devices, but as of now I will just follow the course, since it is teaching me incredible web building tools that I hope by the end of the course will make the process of doing that VERY simple, and diverting form what the author has right now to anything beyond two sensor readings would be borderline impossible since he has a very specific structure that is initially difficult to deviate from.
+
+When doing this, I may have to do a Setup.py configuration on the MultiSPI.py file/folder
+
+
+Further down the line, I will eventually create a Step by step instruction from a blank Raspberry Pi on how to install/set up EVERYTHING for the application.
+
+Specifically, need to update lab_app.py file which is reading sensor data via flask to read MultiSPI file, not much change will need to happen to the MultiSPI. 
+
+I have updated the Python lab_app file from the course to read MCP3008 data via MultiSPI.py, as well as all the configuration files. 
+
+I encountered errors, but thankfully the author taught me how to setup a log folder that will displays both history of using uwsgi AND any error that occurred: fortuneltey, the only error that is occurs is “no python application found”. This leads me to believe that I either do have to have a setup.py program or that I need to incorporate some sort of virtual machine. Looking over once more, it seems that calling the file MultiSPI-online is causing the problem, as the “-“ is invalid syntax in Python, so this may very well be the problem.
+
+Got into the lab and tried just about everything I could find on the internet to fix the issues but to no avail. What I have discovered however is that when I run my lab_app.py file via the command line, and not automatically via the libraries I build the web application the application works exactly as suspected. Therefore, I am for the moment going to move on with spoof data (which works for some reason) and submit a question post to the Udemy course about exactly what I just described except in much more detail so that he would know everything that I have tried/ have that could be of any help: one of the teaching assistants of the course responded within the last 14 hours, which means the course is still looked at and maintained, and the fact that his response was to someone who had posted a question a day ago makes me hopeful that I will receive a response within 24 hours. 
+
+Spoof data is a success: I will need to make it its own file or import this function into the capture script for actually recording the values, otherwise what is being displayed vs what is being captured will be different (although this really doesn’t matter all that much, since they’re random values anyways )
+
+Saturday, July 6th: 8 hours
+
+Discovered the problem: had to Pip install spider and RPi.GPIO while having bin activated while within the directory, since this is how the virtual environment knows where modules are.
+
+Added a new level of system automation that is completely independent of the user. I configured a cron file, which is a linux configuration file that specifies shell commands to run periodically on a given schedule, to automatically take/record sensor data to the database, a process which runs indefinitely after boot time. The only problem with this is is that if we want to manually configure when certain sensors update/record automatically in this way, it could get complicated, as of now the sensor data reading schedule has to manually be inputed to the cron file via the command line, and is a universal time for all the sensors. 
+Created an SQLite3 database which stores 2 sets of data: temperature, and humidity (I can and most likely will change these later, I just havent yet since I would need to update both the database AND the python files), and I have it doing so through the MultiSPI select file: since I often do not have the MultiSPIselect connected, a majority of the sensor readings are 0. This gives me even more incentive to reconfigure the files/databases.
+
+Added a physical page route that displays all of the records of the log for each sensor via the created database in the browser.
+
+Added the ability to, via manipulation of the query string in the URL, to only display a select range of times via the command line, as the page got extremely messy as more data readings were taken. 
+
+Monday, July 8th: 8 hours
+
+Added the ability to no longer have to manually type in the date/time range desired to be displayed with physical radio buttons, which will display readings within either the past 3,6,12, or 24 hours. 
+
+Added the ability to display a physical chart of the data via GoogleCharts, which updates itself to display the specific time range of data values. Google charts seems to have a MUCH better library for displaying data then bokeh: the only difference I see is that it is not real time, but I am almost certain that GoogleCharts can similarly do so, except that it is more powerful and has more capabilities. And rather then running from a server side and be displayed client side, the Google Charts API runs almost entirely on the client side, so real time data capture, display and updating would most likely be faster.
+
+I added a JavaQuery CDN which allows for users to select from two calendars widgets, one is a “from date”, the other a “to date”, which allows users to select a date AND time range that the user wishes to display via the chart and physical database.
+
+Due to the fact that the page name urls are fairly complicated, I added hyperlinks between each page except root: I currently have root only do one thing: say “hello world, but I will soon (most likely tomorrow) have it display information about the shrimp project, and have a note that the webpage layout and design was based on the Udemy course.
+
+I am just about to finish the Udemy course: I chose not to do the “incorporating time zones” section, as we will all be doing our work inside Chicago. I chose to leave out the “incorporating Plotly” section, as of right now it really wont help, and I don’t see much of a reason to include it at this moment since it seems to do everything google charts does just via a different website. I would like to in the future use Plotly.js to have a page that is dedicated to displaying a realtime updated graph: the graph that is currently in place in my opinion is VERY useful, and replacing it with a realtime graph would be a waste since it allows the user to access and visualize certain sections of time. My only concern about not doing these sections right now is that if I try to add them back later once I have added much more html and other code that it may be hard to change it later, as the author has a VERY unique and interesting way of designing pages, which makes it difficult to expand upon. My hope is that by the time that comes, I will be much more comfortable with HTML and I will have adjusted the style of the page to suit my own style so that it will be easy to expand upon. 
+
+Eduroam IP adress: 75.102.255.193
+
+Setting Static IP address: https://thepihut.com/blogs/raspberry-pi-tutorials/how-to-give-your-raspberry-pi-a-static-ip-address-update
+
+I am now at the point that I am ready to make the web application visible over the internet. I have done research on portforwarding and assigning a static IP address to my Pi: the Udemy tutorial on this is very poor, and the fact that Carl said that he would like to host it on his DNS that I will wait and do it with him tomorrow. Until I talk to Carl, I will now begin working on electronics/hardware tasks that Eric has assigned me, as well as working on creating code for the DAC, as the application needs some sort of DAC page, which I have nothing for as of yet. 
+
+Tuesday, July 9th 8 hours.
+
+Spent a good amount of time desoldering the SMT/V2 of the MultiSPI select board since it is not working, and we would like to salvage the terminal mounts as they are expensive and can be reused for other boards. Despite spending a lot of time using both the Desolder sucker and copper wire band to get rid of solder and redoing each solder section multiple times, for some reason I was simply unable to get the terminals out: Eric will try and go over it again and give me advice on how to unsolder it. Despite not being able to separate the terminals from the board, I would say I removed around 75 percent of all the solder, and just from glancing at it it seems that all the holes are completely desoldered. 
+
+I setup static IP and DNS server via Erics DNS. This will allow me to connect to the Pi via SSH via daniel1.elandahl.com, and simply put that in as a url to test the browser rather then the Pi’s IP: this should be available from anywhere on the internet.
+
+ Began working on OpenSCAD for piHat case, which will consist of a raspberry pi with Ellies PiCounter board sitting on top of it. I tried initially to find Open SCAD files specifically, as those are customizable in OpenSCAD, whilst imported STL files are not. I searched for a very long time to find OpenSCAD files of Raspberry pi cases, and was able to find find only one SCAD file, but unfortunately it was the entire case, NOT split up into sections. Nevertheless this is a good find, and I will hopefully be able to use some of their techniques to build the rest of the case. I spent quite a bit of time looking for reasonable Raspberry Pi cases on Thingaverse, and trying to track down software that would covert the STL files (this is essentially the only 3D print file formats on thingaverse) Unfortunately I spent a little too much time barking up the wrong tree, as all of the software that existed either didn’t work or was 5 years + outdated. Eric sent me an SCAD file with the bottom plate of a raspberry pi 3 case, which I will use as a basis for making the other measurements/ layout of the top board. 
+
+Spent the rest of the time taking very precise measurements of the layout of the PiCounter. I also had to spend time fixing the Static IP address of my Pi, as it suddenly stopped connecting to the internet and would not allow me to use Eric’s domain name let alone SSH into it from any device. I was unable to find a solution, so I will work on this tomorrow.
+
+Wednesday July 10th, 8 hours: 
+
+Took a very in depth look at the two SCAD files I had and dissected how they worked. 
+Finally fixed Static IP problem. Unfortunately, this means that we will need to reconfigure the DNS Eric gave me.
+very long in depth meeting with Carl about web Application, meeting with Steve, discussing various electronics topics and setting up a static IP. Also tried to SSH into my Pi which for some reason didnt work, even though I was able to SSH from networks other then eduroam. Wrote software for live graphs: bokeh seemed to be the easiest to do with flask, but unfortunately I can’t test it at the moment since I was unable to install bokeh, since it has so many other dependencies which aren’t installed normally with pip: I tried installing Conda which would install the other dependencies, but that also did not end up working.
+
+Sunday July 14th, 8 hrs 
+
+Read through Linduino code files in order to find the SPI transfer commands for the LTC2418 and LTC2656. Ran it through compilers, and studied it and its attached libraries rather in depth. It took me quite a while, since it is written in C++, and I have only had small exposure to C.
+
+Monday, July 15th, 8 hours
+
+Continued working on Python code. New boards came in, which I went over in depth with Eric, as well as our next steps on the pick and place and surface mounts. Did soldering jobs, and also tested all the connections on the board with an Ohm meter to check for faults: every test went as expected, so if there are any problems, it is either in Eric’s PCB schematic (the original PCP surface mount board we reviewed did not work, so that’s why I list this as a possible problem), or a mistake I made in translating his EAGLE schematic in KiCAD, which I did by hand and not through conversion software. Also soldered components on a board he wants to test for his new Electronics class. 
+
+Wednesday, July 17th, 8 hours: 
+
+Spent a lot of the day trying to set up Carls files that he would like me to use as a template for some of the functions/ setup of the project : I couldn’t get it  to work due to a combination of missing libraries that I couldn’t find, ones that no longer existed, and different versions of Python, so I ended up screens sharing with Carl and we went over the files together.
+
+Thursday, July 18th, 8 hours:
+
+Did extensive research and updated and created files. Unfortenelty, this was the day before my laptop broke, so this is all the information I have about this day: I thought I would come in the day after and write down the rest of what I did.
+
+Friday, July 19th, 8 hours:
+
+This is the day that my computer broke. While on my way into work, the screen shorted out in the rain, and although it was on it would not output its screen via an HDMI cable. I spent some time trying to fix it but to no avail. I then had to go through my old emails to find the files that Niko needed for the pick and place machine. I then soldered the rest of Erics board (it took me quite a while since I realize now that the soldering rod was very old and worn out, and could barely heat the solder up, and I just though I was doing a poor job since I hadn’t practiced for a few weeks). After this, I spent time comparing his board to the schematic, since it did not work as intended. I then spent the rest of the day converting the full stack application.
+
+Sunday July 21st, 8 hours:
+Started to do research into how to have a live update plot, which is also savable and has the ability to be retrievable again and displayed
+Once this graph is saved, it should not only be able to be graphed as a static plot, but a savable level curve should also be implemented, so DACs can follow the function and create outputs
+
+Bokeh seems to not be ideal: Dash seems the preferred graphing method via the internet, which is based off of Plotly.
+
+BIG CHALLENGE: have the graph be able to take in mutliple inputs it could graph: anywhere from 1 to 30 at a time. 
+Seems to be a solution on Plotly community site, titled "Hide one Line in a multi line plot", but specifically "plotting multiple time series on one plot"
+
+Features: via mediums "live stream dashboard websites guide" or "Data visualization guis with dash and python", have graph display data
+have a timeframe/ save form, which will return to some file via url variable saving the time frame graph desired and desired variables
+using Mediums "Creating an interactive data app using plotlys dash", either create a new SQL file with the desired data or somehow pull the relevant data
+load this file and display it at anytime
+have the ability to generate and save a level curve function, and pass it on to DAC values
+
+DAC Input page will give sensor status (inactive/active/what voltage), and the ability to change it
+
+Input Page format:
+
+Have a calibrate system button, repeat run (should give user the ability to pull up a previous file containing run information, pull up and display previous run info,
+ASK CARL ABOUT: what information would be included about the "sample"/what sorts of calculations
+what sorts of run parameters would be included
+the 155 Raspberry pi (web application) is unable to connect to any mirrors to download anything, even as simple as updating the pi
+I tried for a while to change configuration files and update mirror sources but it didn’t work: 
+It seems that this is most likely being caused by the change in the netmask/dns server to set the static IP: will most likely have to go to Crestwood, quickly revert it back, download everything and return
+Confirmed that this is a problem across all of Carls Pis
+
+Monday, July22nd, 8 hours: 
+
+continued with creating tutorial. Sent carl a detailed email about my progress so far on the web application, questions I had about the input form screen, and problems I had with SSH on their Pi's
+
+continued researching live plot options. Also began researching how to open up files via html, since this would be necessary in order to access the inputs "previous run, compare runs", ect.
+
+Created all the required app routes and new HTML pages for the initial functions required for the input dashboard and links between them, specifically run, repeat run, view run, compare run, and calibrate system.
+Since I do not know what parameters will need to be accepted, I included a description of what each page wold do on the routed HTML page.
+
+
+
+
+
+
+https://codepen.io/SpencerCooley/pen/JtiFL/ site that allows access to files on computer
+https://stackoverflow.com/questions/27611216/how-to-pass-a-variable-between-flask-pages
+
+After trouble with importing dash, I was finally able to begin testing it in Python to see how it works. 
+Apparently, it runs in a very similar way as flask, as it generates its own IP address that it uses to be run on the web
+Although this is a problem since flask wouldn’t be able to load this, after running Dash I saw it offered a number of solutions to problems I've been devising solutions to: 
+It has the ability to not only zoom in on certain parts of the graph, but it also has the ability to save these specific sections of the graph as a png file, which I could simply then re-upload to the site so users could look at past charts: need to devise some sort of selectable directory index in html
+
+After researching I was able to find a way to sub-route the Dash application to be run within Flask.
+I have finally found an official Dash website with somewhat official and recent (although not very console) information on live plot information  
+I will first need to get it working alone (which will be difficult since I need to substitute the module inputs it needs which no longer exist for new random ones), then get it running via flask
+https://dash.plot.ly/live-updates
+
+ERIC NOTES
+USE pid for more or less curve fitting, but actually for updating dac values for contorl systems
+
+Tuesday, July 23rd 6:
+
+Continued working on solutions for real time updating Dash app/ Dash applications in general to use for selectivley displaying data
+Was finally able to get a Live Dash app working (currently using dumby data); the reason this took so long is that in late 2018 Dash did a few minor yet signifcant updates, so all of the Dash applications sample codes I could find online wouldn't work at all
+
+Talked with Eric: he has the idea to use PID for things such as curve fitting (in the context of genearting data that a DAC should set itself to, not visualization)
+Since the Reflowduino has so many problems they are going to drop the Arduino aspect and have me program it in Raspberry Pi; this way, Eric will teach me vital control system concepts, and I will know how to translate it into Python while working with him
+
+Once I finish getting the dash running within Flask (which is hard since Dash is built off of flask, so I'll have to figure out how to nest it) and finish the Web App install tutorial, I will begin working with Eric 
+I will ALSO be using the live graph with Eric, which I will need to setup to read real data (which I will eventually do anyways to read/display real data, so I'm knocking it out right now rather then later)
+Eventually I will give it the ability to select which data to plot, and also the ability to stop plotting
+Big challenge currently is finding a way to save the plot for later data analysis, since the only way soley in Plotly is to save a PNG
+A possible solution is to have it save a log of the session of all the data that happened.
+I will use the MultiSPI-Select to read the voltages, and use a proportional method (turn on when too low, off when to high) to control the temperature
+The only problem is that I need to send the Reflow machine a voltage to turn if on/off, which isnt possible with the MultiSPI, since the ribbon cable uses all the GPIO Pins
+Eric has a solution: rip out an MCP3008, and wire up the Chip Enable directly to a channel, and chip enable over to that MCP3008 (I will use the first one) and chip enable back when needed.
+Once I switch it over to the "output", figure out if  I need to physically turn off/on the Chip enable GPIO pin or just have it select: wire it up to and LED to test  
+
+I finished the Fullstack web application download tutorial. I have uploaded to github all the files/folder necessary for the application that do not manually need to be created.
+Once this is done, the user simply needs to run all of the commands given (occasionally it will tell the user to create folders that were already there/download files to them, I included this just in case there were problems with downloading it direclty from github, and it had to be done sequentially)
+Most are module/library instalitations, although some require creating/changing configuration files,
+
+Was succesful at loading the live Dash plot into the flask application. I also added an html button that redirects to this page via the Root homescreen, so that the user doesn't have to remeber the url to access it.
+
+Wednesday July 24th 8 hours:
+Was finally able to download the necessary libraries/modules to be able to thoroughly disect Carls input pages, which I have a much better understanding of now (still may need more of an idea on how to calibrate, but it seems like alot of what would need to calibrated/calculated Eric will teach me)
+Will now begin having the input pages interact with data since I know what it is; I will work on having the new run page to populate an SQLite3 file with all of its inputs, so that it can be stored for not only passing the data to other web pages, but also to the repeat run page
+I will have the repeat run page have the user select which run, and either reload the page with formfitting via a template (may be able to do this with an if then statement in the flask app) otherwise use get/post to route to a new page with the data
+
+I have the Dash application succesfully reading and plotting real sensor data via the MultiSPI select. I have been maticuloulsy comparing different Dash applications with my own working code so that I can understand and adapt it to what is normally used by others so that I can better edit it later
+I now understand essentially everything that happens in my code, which allowed me to let it read real data
+After reading through the Plotly dash user page quite a bit I now realize Dash is essentially Flask that hosts Plotly; I should be able to 70% of what I need to do by examining the Plotly code, and the other 30% by getting a better grasp of HTML callbacks and javascript
+Figuring this out has helped me find alot of example code which I have commented in the bottom of the Sensor plot form
+A majority of the hard tasks I have forseen with using Dash seem solvable with these files
+I have been trying for a while to add axis labels: I have only been succesful in changing reading time frequency and the title of the whole graph itself
+
+
+After getting the MultiSPI to be readable on the Live plot,I spent some time trying to get the Demux to ouput high and
+https://github.com/carkxs/Daniel-Fingerson.git
+
+Wednesday, July 31st: I have begun learning PHP. This seems like the best method beyond javascript (PHP seems much simpler/makes more sense to use) to for form handling and transmitting data between the server and client, especially between html pages
+I have been loading HTML pages by loading them as Flask templates: this has the advantage of allowing the HTML page to be loaded with whatever variable upon being loaded/reloaded via python
+the only problem is that input form pages will proabably need to be converted to PHP files (which contain HTML); this may not be a problem, but I'm not sure how flask will react to this new file type (I suspect that Flask, like most web servers like Apache, have built in PHP support)
+My solution will be rather then messing up all the input forms pages I will create a new PHP file to test PHP with and have a button extension to it in flask, as this is my first time dealing with PHP.
+This shouldn't be too difficult to figure out. I also believe that it will be fairly simple to insert input form data via PHP into an SQLITE file (it will be a little tricky creating the intital database)
+Soemthing I do forsee as challenging is setting up the pages such as "repeat and compare runs", as this will require retrieving a specific element from the Database; I will need to figure out an effective for loop solution
+After much trial and error, the PHP does not work. After researching, I realized (from what I can see) that this is because PHP is intended to be used on static pages, whilst Flask is apparently fairly dynamic, and has the capabilities of handling user input 
+Although loading a flask template with data is very easy, doing so with selectable user input will proably be a challenge (url query string? cookies? html5 variables?)
+
+If the form process gets too complicated for flask to handle (may not be able to handle more then 1 input), an option that I have found on the web that works well with flask is WTForms, which has its own API for forms/user input and has a good amount of documentation
+http://wtforms.simplecodes.com/docs/1.0.2/crash_course.html #how WTForms work
+https://flask.palletsprojects.com/en/1.1.x/patterns/wtforms/ #how to work it with flask
+
+I could ALSO try using PHP again: I compltely forgot that I included in one of html forms a php command but in the form of a "form action" command, so no php code is actually present in a file and thus doesnt crash the server, it only gets run when the submit button is pressed; I still believe doing everything via flask will be better in the long run, but I may try this if soly flask doesnt work, and before trying the WTForms
+I can find this example in the sample 1 page
+
+AN AMAZING FLASK DASHBOARD OPTION: https://danidee10.github.io/2016/11/14/flask-by-example-7.html
+admin-flask (possibly a built in API) has a very slick interface that essentially looks like it is made for the sole purpose of a Dashboard interface
+Eventually: add a pull down form that uses the Flask for loop to display what runs have already been used (use this for the review run)
+Have input pages creating outputp pages, record what inputs happen to a database, and the ability to retrieve data from the database
+These however do not work as of yet on the website, only in isolated python modules independant of the website.
+
+Thursday, August 1st:
+
+Spent some time researching and getting familiar with how get and post forms on HTML pages work. 
+With this, I was able to have pages which would load in with variables that were populated with user input.
+In order to do this, I made the HTML layouts and pathways for two pages in particular since they are esssentially the skeleton for the other input dashboard requirements: new run and review run
+The new run function has an input form screen: one which specifies the run number/id (I can/will eventually have the option to make this an automatic numbering system) as well as 2 input paramater fields (I only did this for test sake, I now could easilly add more)
+Once the variables are inputed, it not only displays them formatted on another screen (could have this be an "are you sure" validation screen, perhaps), but it also saves them to an SQLite database. This is where the review runs function comes into play:
+The review runs function has only one input paramater: run/id number. Once this is is inputted, it pulls up a page that is formatted to show all of the paramaters of that run via the database.
+From these two functions, the compare and repeat runs will use these same concepts to run. 
+
+Was finally able to get the code working successfully to output voltages at will from the Chip select of the raspberry pi
+When I went to test my software on the Reflow oven, one of the MCP3008s on the board burst into flames
+
+Friday, August 2nd:  THIS WAS TEHE SECOND
+Had to fix Pi, tried setting up fullstack on my other Pi but it didnt work
+Setup text message sending function.
+
+Go through Carls code files and pull out variable names
+
+Saturday, August 3rd: continue working with livePlot/ adding more lines (at the very minimum, eventually the ability to select and choose)
+Make a crude but fully working prototype of the stepper function: figure out dash later (shouldnt be too hard, I just dont know how it will update; add a literal print function so that if its updating it will show up on the conosle)
+
+DIDNT WORK THR 25th, need to figure out how I make up for that 8 hours; means I missed 16 hours that week from being sick/ Jack
+Only worked 28 hours this week, physically say I made up for it next week
+28 since I worked 4 Saturday; night need to work an additional 8 ontop of that
+
+Monday, August 5th 
+
+went to Argonne
+
+Tuesday, August 6th 
+setup Linux on chrome so that I could copy pis. set up Pis, copied disk image( had to use a number of methods) worked on reflow oven, had problems LIST THEM (in Eric text)
+
+Thursday, August 8th:
+Continued helping setup pis: eventually came to the conclusion that my chrome book didn’t have the space/ processing power necessary. Went over problems of Reflow oven with Eric, came to the conclusion that even with the converter, it simply didn’t have the resolution to pick it up. Therefore, I began making an Op amp with enough gain. After doing research, I figured out the setup and equation/ gain I would require: figured out that a gain of 500 would be most ideal, so I used a 1k and 500kohm resistors. For a long time it wasn’t working, so I called Carl for a while to discuss our github page. I eventually fixed the op amp, and started running experiments to figure out what the conversion rate was; since the thermocouples May have been at different lengths/ non linear properties of the op amps I was receiving a decently wide range of what the conversion rate may have been.
+
+Friday, August 9th:
+I was eventually able to make a program that consistently held the oven at 180 C by turning it on and off by calculating its voltage/ temperature offset ratio. Unforutantely this offset did not work for lower temperatures and would be extremely off. Since for the PCB it’s required that the oven is held at certain lower temperatures I began making a program to have it display an accurate reading for all temperatures.
+In order to find out the offset/ why it wasn’t consistent I took measurements of the oven, what it’s actual voltage was, and what the ADC measured for every 10 degrees C up until 180. I then made a cubic spline interpolation function that would return the correct ADC reading if given a temperature and the correct temperature give an ADC reading.
+
+Monday August 12th, 8 hours :
+Had to debug the oven since it didn’t work when I came in after the weekend. It seems like it was some sort of hardware problem, since after. Meticulously looking at the code it was fine, and after unplugging/ replugging in components it began to work. I also realized that I was using 5v as Vref, so I changed it and the code to be 3.3, as Eric wanted this and said it was more accurate (I thought I did so, but may have changed it when the machine was initially buggy). Did a number of a additional test runs since the oven was reading back measurements that were much too sporadic and random. Tried for a while to make a new interpolation function, but then moved on to
+
+Wednesday, August 14th, 8 hours .
+Went through and did a very thorough run through of the oven, which I checked, ran through, and let cool about 3 times. Now the code is essentially always accurate within 2 degrees of error, but at least goes up now by a consistent amount. Took data about the speed up time for certain temperature ranges, and was able to build a ramp function which allows for an increpase to a certain temperature at a certain rate
+
+Thursday, August 15th:
+
+Recalibrated the machine and ran it many times so that I could get profiles for different temperature intervals for things such as how long it would take to stop heating up after shutting off the oven so that I can better maintain a temperature, how long it would take to heat up to a certain temperature within given temperature ranges (as it got increasingly longer as the temp range increased). I had a ramp function that worked almost perfectly. Once I had this Eric gave me a reflow profile for the paste that we actually had. After doing another run to check heat up times on the given interval I realized that the oven simply can’t heat up fast enough, since the reflow needs MUCH faster ramp times then the oven is capable of. Currently, Eric is considering buying a toaster oven and using that. Having a “pillow” on the door, which would reduce the amount of space in the oven, could also be a solution which Niko proposed. 
+
+Friday, August 16th, 8 hours:
+
+Spent about half of the day reading the entire data sheet for the LTC2448 and comparing it to the linduino C++ code. I now have code that should read and write data, and I’m essentially certain it should work. When I try to read the data I receive back in volts however it does not read back what I expect. I assume that this is either me not configuring the ADC correctly initially, Carls information about which channels had which volts are not correct, the Devi s not being wired correctly, or my conversion code is incorrect; I’ll have Eric take a look at it with me to try and islolate the issue. I then spent the rest of the day setting up the Fullstack Application. I believe that I did it correctly, but will have to Skype carl to be sure.
